@@ -19,4 +19,4 @@ BoyJack OS — это операционная система, разработ�
 
 ```bash
 # Пример команды для создания загрузочного диска
-dd if=cosmos-os.iso of=/dev/sdX bs=4M status=progress
+dd if=boyjack-os.iso of=/dev/sdX bs=4M status=progress
