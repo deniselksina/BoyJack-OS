@@ -6,23 +6,25 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+# Установка необходимых зависимостей
 echo "Устанавливаем необходимые зависимости..."
 sudo apt-get update
-sudo apt-get install -y build-essential gcc make curl dpkg mate-desktop-environment gnome-software android-tools-adb android-tools-fastboot
+sudo apt-get install -y build-essential gcc make curl dpkg mate-desktop-environment gnome-software android-tools-adb android-tools-fastboot libssl-dev libncurses-dev bison flex
 
-# Проверяем успешность установки
+# Проверка успешности установки зависимостей
 if [[ $? -ne 0 ]]; then
     echo "Ошибка установки зависимостей! Проверьте интернет-соединение и попробуйте снова."
     exit 1
 fi
 
-# Установка рабочего стола
+# Установка рабочего стола Ubuntu MATE
 echo "Устанавливаем Ubuntu MATE..."
 sudo apt-get install -y ubuntu-mate-desktop || { echo "Ошибка установки Ubuntu MATE!"; exit 1; }
 
 # Установка Google Chrome
 echo "Устанавливаем Google Chrome..."
-wget -q -O google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+CHROME_URL="https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+wget -q -O google-chrome.deb $CHROME_URL
 if [[ -f "google-chrome.deb" ]]; then
     sudo dpkg -i google-chrome.deb
     sudo apt-get install -f -y
@@ -33,17 +35,13 @@ fi
 
 # Настройка системных параметров
 echo "Настройка системы..."
-if [[ -f "./configs/system.conf" ]]; then
-    sudo cp ./configs/system.conf /etc/system.conf
-else
-    echo "⚠️ Файл system.conf не найден! Пропускаем."
-fi
-
-if [[ -f "./configs/user.conf" ]]; then
-    sudo cp ./configs/user.conf /etc/user.conf
-else
-    echo "⚠️ Файл user.conf не найден! Пропускаем."
-fi
+for file in "./configs/system.conf" "./configs/user.conf"; do
+    if [[ -f "$file" ]]; then
+        sudo cp "$file" "/etc/$(basename $file)"
+    else
+        echo "⚠️ Файл $(basename $file) не найден! Пропускаем."
+    fi
+done
 
 # Копирование файлов ядра и приложений
 echo "Копирование файлов..."
@@ -95,6 +93,11 @@ fi
 
 # Завершение установки
 echo "✅ Установка завершена!"
+
+# Очистка неиспользуемых пакетов
+echo "Очистка неиспользуемых пакетов..."
+sudo apt-get autoremove -y
+sudo apt-get autoclean -y
 
 # Запрос на перезагрузку
 read -p "Хотите перезагрузить систему сейчас? (y/n): " choice
